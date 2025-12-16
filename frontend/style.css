@@ -1,0 +1,702 @@
+/* ===== CSS Variables ===== */
+:root {
+  --primary: #e50914;
+  --primary-dark: #b20710;
+  --bg-dark: #141414;
+  --bg-card: #1f1f1f;
+  --bg-header: #0f0f0f;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #808080;
+  --border-color: #333;
+  --shadow: 0 4px 20px rgba(0,0,0,0.4);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.3s ease;
+}
+
+/* ===== Reset & Base ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ===== Header ===== */
+.header {
+  background: var(--bg-header);
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+/* ===== Navigation Menu ===== */
+.menu {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.menu a {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.menu a:hover {
+  background: var(--primary);
+  color: var(--text-primary);
+}
+
+/* ===== Search Box ===== */
+.search-box {
+  margin-left: auto;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  width: 200px;
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-box button {
+  background: var(--primary);
+  border: none;
+  padding: 10px 16px;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.search-box button:hover {
+  background: var(--primary-dark);
+}
+
+/* ===== Main Container ===== */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ===== Filter Bar ===== */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 150px;
+}
+
+.filter-bar select:hover,
+.filter-bar select:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.filter-bar button {
+  background: var(--primary);
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-bar button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* ===== Page Title ===== */
+#pageTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid var(--primary);
+  display: inline-block;
+}
+
+/* ===== Movie Grid ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* ===== Movie Card ===== */
+.movie {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.movie:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow);
+}
+
+.movie::after {
+  content: '▶';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 50px;
+  height: 50px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.movie:hover::after {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.9;
+}
+
+.movie img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  transition: var(--transition);
+}
+
+.movie:hover img {
+  filter: brightness(0.7);
+}
+
+.movie h3 {
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* ===== Pagination ===== */
+#pagination {
+  margin-top: 40px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+#pagination button {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#pagination button:hover:not([disabled]) {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+#pagination button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#pagination span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ===== No Results ===== */
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+/* ===== Content (Detail Page) ===== */
+.content {
+  max-width: 1200px;
+  margin: 20px auto;
+  background: var(--bg-card);
+  padding: 30px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+/* ===== Back Button ===== */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 20px;
+}
+
+.back:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* ===== Detail Top ===== */
+.detail-top {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+#detail-poster {
+  width: 280px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.meta {
+  flex: 1;
+  min-width: 280px;
+}
+
+.meta h1 {
+  font-size: 1.8rem;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.meta div {
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.meta b {
+  color: var(--text-primary);
+}
+
+.year-link,
+#genre-tags span,
+#country-tags span {
+  color: var(--primary) !important;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.year-link:hover,
+#genre-tags span:hover,
+#country-tags span:hover {
+  text-decoration: underline;
+}
+
+/* ===== Episodes ===== */
+.content h3 {
+  font-size: 1.3rem;
+  margin: 30px 0 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.episode-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.episode-list button,
+.episode-btn {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.9rem;
+}
+
+.episode-list button:hover,
+.episode-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.episode-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+}
+
+/* ===== Player ===== */
+#player {
+  margin-top: 20px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+  width: 100%;
+}
+
+#player iframe {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  border: none;
+  display: block;
+}
+
+#player p {
+  color: var(--text-muted);
+  padding: 20px;
+  text-align: center;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+  margin-top: 40px;
+}
+
+/* ===== Mobile Menu Toggle ===== */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+  }
+  
+  .movie img {
+    height: 210px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  
+  .menu-toggle {
+    display: block;
+    order: 1;
+    font-size: 1.3rem;
+  }
+  
+  .logo {
+    order: 0;
+    font-size: 1.2rem;
+    flex: 1;
+  }
+  
+  .logo span {
+    display: none;
+  }
+  
+  .search-box {
+    order: 2;
+    margin-left: 0;
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .search-box input {
+    flex: 1;
+    width: auto;
+  }
+  
+  .menu {
+    order: 3;
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  
+  .menu.active {
+    display: flex;
+  }
+  
+  .menu a {
+    padding: 12px 16px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .menu a:last-child {
+    border-bottom: none;
+  }
+  
+  .filter-bar {
+    gap: 8px;
+  }
+  
+  .filter-bar select {
+    flex: 1;
+    min-width: calc(50% - 4px);
+  }
+  
+  .filter-bar button {
+    width: 100%;
+  }
+  
+  #pageTitle {
+    font-size: 1.4rem;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+  }
+  
+  .movie img {
+    height: 180px;
+  }
+  
+  .movie h3 {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .content {
+    padding: 20px;
+    margin: 15px;
+  }
+  
+  .detail-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  #detail-poster {
+    width: 200px;
+  }
+  
+  .meta {
+    min-width: 100%;
+  }
+  
+  .meta h1 {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .header {
+    padding: 0 15px;
+  }
+  
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .movie img {
+    height: 160px;
+  }
+  
+  .movie h3 {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+  
+  #pagination button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .filter-bar select {
+    min-width: 100%;
+    padding: 12px;
+  }
+  
+  .episode-list button,
+  .episode-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  #detail-poster {
+    width: 160px;
+  }
+  
+  .content {
+    padding: 15px;
+    margin: 10px;
+    border-radius: var(--radius);
+  }
+  
+  .content h3 {
+    font-size: 1.1rem;
+    margin: 20px 0 10px;
+  }
+  
+  .back {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+  
+  #player iframe {
+    height: 220px;
+  }
+  
+  .meta div {
+    font-size: 0.9rem;
+  }
+}
+
+/* ===== Loading Animation ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

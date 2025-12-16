@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>MovieSite - Xem Phim Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Xem phim online miễn phí, phim lẻ, phim bộ, hoạt hình chất lượng cao">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', 'Segoe UI', sans-serif; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo" onclick="goHome()">
+        <span>🎬</span> MovieSite
+      </div>
+
+      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+      <nav class="menu" id="navMenu">
+        <a href="#" onclick="loadByType('phim-le');return false;">Phim lẻ</a>
+        <a href="#" onclick="loadByType('phim-bo');return false;">Phim bộ</a>
+        <a href="#" onclick="loadByType('tv-shows');return false;">TV Shows</a>
+        <a href="#" onclick="loadByType('hoat-hinh');return false;">Hoạt hình</a>
+        <a href="#" onclick="loadByType('phim-vietsub');return false;">Vietsub</a>
+        <a href="#" onclick="loadByType('phim-thuyet-minh');return false;">Thuyết minh</a>
+        <a href="#" onclick="loadByType('phim-long-tieng');return false;">Lồng tiếng</a>
+      </nav>
+
+      <div class="search-box">
+        <input id="searchInput" placeholder="Tìm kiếm phim..." />
+        <button onclick="searchMovie()">🔍</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Filter nâng cao -->
+    <div class="filter-bar">
+      <select id="category">
+        <option value="">📁 Thể loại</option>
+      </select>
+
+      <select id="country">
+        <option value="">🌍 Quốc gia</option>
+      </select>
+
+      <select id="year">
+        <option value="">📅 Năm</option>
+      </select>
+
+      <select id="sortLang">
+        <option value="">🗣️ Ngôn ngữ</option>
+        <option value="vietsub">Vietsub</option>
+        <option value="thuyet-minh">Thuyết minh</option>
+        <option value="long-tieng">Lồng tiếng</option>
+      </select>
+
+      <button onclick="applyFilter()">🔍 Lọc phim</button>
+    </div>
+
+    <h1 id="pageTitle">🎬 Phim mới cập nhật</h1>
+    
+    <div id="movies" class="grid"></div>
+    
+    <div id="pagination"></div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 MovieSite - Xem phim online miễn phí</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    function toggleMenu() {
+      document.getElementById('navMenu').classList.toggle('active');
+    }
+  </script>
+</body>
+</html>
