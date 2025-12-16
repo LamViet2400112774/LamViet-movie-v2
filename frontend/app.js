@@ -7,7 +7,7 @@ const getApiUrl = () => {
   }
   // For production, use Render API URL
   return window.location.origin.includes("vercel") 
-    ? "https://moviesite-backend.onrender.com/api"  // Replace with your actual Render URL
+    ? "https://lamviet-movie-v2.onrender.com/api"  // Replace with your actual Render URL
     : "http://localhost:3000/api";
 };
 
