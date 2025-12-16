@@ -1,6 +1,17 @@
 /* app.js - Fixed all syntax issues */
 
-const API = "http://localhost:3000/api";
+// Detect API based on environment
+const getApiUrl = () => {
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "http://localhost:3000/api";
+  }
+  // For production, use Render API URL
+  return window.location.origin.includes("vercel") 
+    ? "https://moviesite-backend.onrender.com/api"  // Replace with your actual Render URL
+    : "http://localhost:3000/api";
+};
+
+const API = getApiUrl();
 const PHIMAPI = "https://phimapi.com";
 
 /* ===== Helpers ===== */
