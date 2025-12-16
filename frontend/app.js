@@ -534,12 +534,17 @@ function renderMovieDetail(movie, episodes) {
   });
   episodesEl.innerHTML = html;
 
-  document.querySelectorAll(".episode-btn").forEach(btn => {
+  document.querySelectorAll(".episode-btn").forEach((btn, index) => {
     btn.addEventListener("click", () => {
       // Remove active class from all buttons
       document.querySelectorAll(".episode-btn").forEach(b => b.classList.remove("active"));
       // Add active class to clicked button
       btn.classList.add("active");
+      // Update current episode info
+      const episodeInfo = document.getElementById("episodeInfo");
+      if (episodeInfo) {
+        episodeInfo.innerHTML = `<strong style="color: var(--primary);">${btn.textContent}</strong>`;
+      }
       playEpisode(btn.dataset.link);
     });
   });
@@ -547,7 +552,14 @@ function renderMovieDetail(movie, episodes) {
   if (firstLink) {
     // Set first button as active
     const firstBtn = document.querySelector(".episode-btn");
-    if (firstBtn) firstBtn.classList.add("active");
+    if (firstBtn) {
+      firstBtn.classList.add("active");
+      // Update episode info for first episode
+      const episodeInfo = document.getElementById("episodeInfo");
+      if (episodeInfo) {
+        episodeInfo.innerHTML = `<strong style="color: var(--primary);">${firstBtn.textContent}</strong>`;
+      }
+    }
     playEpisode(firstLink);
   }
   else {
