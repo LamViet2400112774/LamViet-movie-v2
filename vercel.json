@@ -1,20 +1,8 @@
 {
-  "version": 2,
-  "name": "movie-site",
-  "public": false,
-  "buildCommand": "echo 'Frontend only, no build needed'",
-  "outputDirectory": "frontend",
-  "framework": "vanilla",
-  "redirects": [
-    {
-      "source": "/index.html",
-      "destination": "/index.html"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/$1"
+      "destination": "/frontend/$1"
     }
   ]
 }
