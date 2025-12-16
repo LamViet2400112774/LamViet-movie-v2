@@ -25,6 +25,42 @@ function slugify(s) {
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+function getTypeDisplayName(type) {
+  const typeMap = {
+    "phim-le": "Phim lẻ",
+    "phim-bo": "Phim bộ",
+    "tv-shows": "TV Shows",
+    "hoat-hinh": "Hoạt hình",
+    "phim-vietsub": "Vietsub",
+    "phim-thuyet-minh": "Thuyết minh",
+    "phim-long-tieng": "Lồng tiếng"
+  };
+  return typeMap[type] || type;
+}
+
+function filterByType(items, type) {
+  if (!type || !items || items.length === 0) return items;
+  
+  // Map type to slug format used in API
+  const typeSlug = type.toLowerCase().replace(/\s+/g, "-");
+  
+  return items.filter(item => {
+    const itemType = (item.type || "").toLowerCase();
+    const itemSlug = slugify(item.type || "");
+    
+    // Match by type slug
+    if (itemSlug === typeSlug || itemType === typeSlug) return true;
+    
+    // Special matching
+    if (type === "phim-le" && (itemType === "single" || itemType.includes("lẻ") || itemType.includes("le"))) return true;
+    if (type === "phim-bo" && (itemType === "series" || itemType.includes("bộ") || itemType.includes("bo"))) return true;
+    if (type === "tv-shows" && (itemType.includes("tv") || itemType.includes("show"))) return true;
+    if (type === "hoat-hinh" && (itemType.includes("hoat") || itemType.includes("cartoon") || itemType.includes("anime"))) return true;
+    
+    return false;
+  });
+}
+
 function buildImageUrl(raw) {
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) {
@@ -57,8 +93,9 @@ function extractTotalPages(data) {
 
 /* ===== State ===== */
 let currentPage = 1;
-let currentType = "phim-le";
+let currentType = null; // Don't default to phim-le, let URL determine
 let lastFilter = { kind: "latest", args: {} };
+let isPopState = false; // Flag to prevent pushState during popstate
 
 /* ===== Title Map ===== */
 const titleMap = {
@@ -143,7 +180,10 @@ function renderPagination(page, totalPages) {
 
 /* ===== Navigation ===== */
 function goMovie(slug) {
+  // Save current scroll position and full URL for back navigation
   sessionStorage.setItem("scrollY", window.scrollY);
+  sessionStorage.setItem("lastIndexURL", location.search); // Save the full query string
+  
   const params = new URLSearchParams(location.search);
   const page = params.get("page") || currentPage || 1;
   const type = params.get("type") || currentType;
@@ -153,14 +193,60 @@ function goMovie(slug) {
 }
 
 function goHome() {
-  const params = new URLSearchParams(location.search);
-  const fromPage = params.get("fromPage") || params.get("page") || 1;
-  const fromType = params.get("fromType");
-  if (fromType) {
-    location.href = `index.html?type=${encodeURIComponent(fromType)}&page=${fromPage}`;
-  } else {
-    location.href = `index.html?page=${fromPage}`;
-  }
+  // Clear any stored URL and go to homepage page 1
+  sessionStorage.removeItem("lastIndexURL");
+  sessionStorage.removeItem("scrollY");
+  location.href = "index.html?page=1";
+}
+
+/* ===== Fetch DanhSach with Filter (country/year) - API supports this natively! ===== */
+function fetchDanhSachWithFilter(type, args, page = 1) {
+  const { country, year, sortField, sortType, sortLang, limit } = args;
+  
+  // Build title
+  let titleParts = [getTypeDisplayName(type)];
+  if (country) titleParts.push(`Quốc gia: ${country}`);
+  if (year) titleParts.push(`Năm: ${year}`);
+  updatePageTitle(null, titleParts.join(' - '));
+  
+  // Build API URL with filter params
+  const params = {
+    page,
+    limit: limit || 24,
+    sort_field: sortField || "modified.time",
+    sort_type: sortType || "desc"
+  };
+  if (country) params.country = country;
+  if (year) params.year = year;
+  if (sortLang) params.sort_lang = sortLang;
+  
+  const endpoint = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(type)}?${q(params)}`;
+  
+  // Save filter state
+  lastFilter = { kind: "danh-sach-filter", args: { type, country, year, sortField, sortType, sortLang, limit, page } };
+  
+  // Build URL params
+  let urlParams = `?type=${encodeURIComponent(type)}&page=${page}`;
+  if (country) urlParams += `&country=${encodeURIComponent(country)}`;
+  if (year) urlParams += `&year=${encodeURIComponent(year)}`;
+  if (sortLang) urlParams += `&lang=${encodeURIComponent(sortLang)}`;
+  if (!isPopState) history.pushState(null, "", urlParams);
+  
+  return fetch(endpoint)
+    .then(r => r.json())
+    .then(data => {
+      const items = data?.data?.items || data?.items || [];
+      const totalPages = extractTotalPages(data);
+      renderMovies(items);
+      renderPagination(page, totalPages);
+      return data;
+    })
+    .catch(err => {
+      console.error(err);
+      renderMovies([]);
+      renderPagination(1, 1);
+      return null;
+    });
 }
 
 /* ===== Load Latest (local API) ===== */
@@ -168,7 +254,7 @@ function loadLatest(page = 1) {
   currentPage = page;
   lastFilter = { kind: "latest", args: { page } };
   updatePageTitle(null);
-  history.replaceState(null, "", `?page=${page}`);
+  if (!isPopState) history.pushState(null, "", `?page=${page}`);
 
   return fetch(`${API}/latest?page=${page}`)
     .then(res => res.json())
@@ -191,9 +277,21 @@ function loadLatest(page = 1) {
 function loadByType(type, page = 1) {
   currentType = type || currentType;
   currentPage = page;
+  
+  // Get current filter values
+  const category = document.getElementById("category")?.value || "";
+  const country = document.getElementById("country")?.value || "";
+  const year = document.getElementById("year")?.value || "";
+  const sortLang = document.getElementById("sortLang")?.value || "";
+  
+  // If filters are active, use them with the type
+  if (category || country || year || sortLang) {
+    return applyFilter(page);
+  }
+  
   lastFilter = { kind: "danh-sach", args: { type: currentType, page } };
   updatePageTitle(currentType);
-  history.replaceState(null, "", `?type=${encodeURIComponent(currentType)}&page=${page}`);
+  if (!isPopState) history.pushState(null, "", `?type=${encodeURIComponent(currentType)}&page=${page}`);
 
   const limit = 24;
   const url = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
@@ -227,7 +325,7 @@ function searchMovie(page = 1) {
   currentPage = page;
   lastFilter = { kind: "search", args: { keyword, page } };
   updatePageTitle(null, `🔍 Kết quả tìm kiếm: "${keyword}"`);
-  history.replaceState(null, "", `?type=search&page=${page}&keyword=${encodeURIComponent(keyword)}`);
+  if (!isPopState) history.pushState(null, "", `?type=search&page=${page}&keyword=${encodeURIComponent(keyword)}`);
 
   const limit = 24;
   const url = `${PHIMAPI}/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}&limit=${limit}`;
@@ -252,7 +350,8 @@ function searchMovie(page = 1) {
 /* ===== Filter: The Loai (Category) ===== */
 function fetchTheLoai(args, page = 1) {
   const category = args.category;
-  updatePageTitle(null, `🎭 Thể loại: ${category}`);
+  const titleSuffix = currentType ? ` - ${getTypeDisplayName(currentType)}` : '';
+  updatePageTitle(null, `🎭 Thể loại: ${category}${titleSuffix}`);
   const params = {
     page,
     sort_field: args.sortField || "_id",
@@ -265,7 +364,10 @@ function fetchTheLoai(args, page = 1) {
   const endpoint = `${PHIMAPI}/v1/api/the-loai/${encodeURIComponent(category)}?${q(params)}`;
 
   lastFilter = { kind: "the-loai", args: Object.assign({}, args, { page }) };
-  history.replaceState(null, "", `?type=the-loai&category=${encodeURIComponent(category)}&page=${page}`);
+  
+  let urlParams = `?type=the-loai&category=${encodeURIComponent(category)}&page=${page}`;
+  if (currentType) urlParams += `&navType=${encodeURIComponent(currentType)}`;
+  if (!isPopState) history.pushState(null, "", urlParams);
 
   return fetch(endpoint)
     .then(r => r.json())
@@ -287,7 +389,8 @@ function fetchTheLoai(args, page = 1) {
 /* ===== Filter: Quoc Gia (Country) ===== */
 function fetchQuocGia(args, page = 1) {
   const country = args.country;
-  updatePageTitle(null, `🌍 Quốc gia: ${country}`);
+  const titleSuffix = currentType ? ` - ${getTypeDisplayName(currentType)}` : '';
+  updatePageTitle(null, `🌍 Quốc gia: ${country}${titleSuffix}`);
   const params = {
     page,
     sort_field: args.sortField || "_id",
@@ -300,7 +403,10 @@ function fetchQuocGia(args, page = 1) {
   const endpoint = `${PHIMAPI}/v1/api/quoc-gia/${encodeURIComponent(country)}?${q(params)}`;
 
   lastFilter = { kind: "quoc-gia", args: Object.assign({}, args, { page }) };
-  history.replaceState(null, "", `?type=quoc-gia&country=${encodeURIComponent(country)}&page=${page}`);
+  
+  let urlParams = `?type=quoc-gia&country=${encodeURIComponent(country)}&page=${page}`;
+  if (currentType) urlParams += `&navType=${encodeURIComponent(currentType)}`;
+  if (!isPopState) history.pushState(null, "", urlParams);
 
   return fetch(endpoint)
     .then(r => r.json())
@@ -322,7 +428,8 @@ function fetchQuocGia(args, page = 1) {
 /* ===== Filter: Nam (Year) ===== */
 function fetchNam(args, page = 1) {
   const year = args.year;
-  updatePageTitle(null, `📅 Năm: ${year}`);
+  const titleSuffix = currentType ? ` - ${getTypeDisplayName(currentType)}` : '';
+  updatePageTitle(null, `📅 Năm: ${year}${titleSuffix}`);
   const params = {
     page,
     sort_field: args.sortField || "_id",
@@ -335,7 +442,10 @@ function fetchNam(args, page = 1) {
   const endpoint = `${PHIMAPI}/v1/api/nam/${encodeURIComponent(year)}?${q(params)}`;
 
   lastFilter = { kind: "nam", args: Object.assign({}, args, { page }) };
-  history.replaceState(null, "", `?type=nam&year=${encodeURIComponent(year)}&page=${page}`);
+  
+  let urlParams = `?type=nam&year=${encodeURIComponent(year)}&page=${page}`;
+  if (currentType) urlParams += `&navType=${encodeURIComponent(currentType)}`;
+  if (!isPopState) history.pushState(null, "", urlParams);
 
   return fetch(endpoint)
     .then(r => r.json())
@@ -365,11 +475,56 @@ function applyFilter(page = 1) {
   const limit = 24;
 
   const args = { category, country, year, sortField, sortType, sortLang, limit };
+  
+  // If currentType is set, use danh-sach endpoint with filter params (API supports this!)
+  if (currentType && (country || year)) {
+    return fetchDanhSachWithFilter(currentType, args, page);
+  }
+  
+  // Build URL - DO NOT duplicate type parameter
+  let urlParams = `?page=${page}`;
+  
+  if (category) {
+    urlParams += `&type=the-loai&category=${encodeURIComponent(category)}`;
+    if (currentType) urlParams += `&navType=${encodeURIComponent(currentType)}`;
+  } else if (country) {
+    urlParams += `&type=quoc-gia&country=${encodeURIComponent(country)}`;
+  } else if (year) {
+    urlParams += `&type=nam&year=${encodeURIComponent(year)}`;
+  } else if (currentType) {
+    urlParams += `&type=${encodeURIComponent(currentType)}`;
+  }
+  
+  if (sortLang) urlParams += `&lang=${encodeURIComponent(sortLang)}`;
+  if (!isPopState) history.pushState(null, "", urlParams);
 
   if (category) return fetchTheLoai(args, page);
   if (country) return fetchQuocGia(args, page);
   if (year) return fetchNam(args, page);
-  return loadByType(currentType, page);
+  
+  // If only type is selected (no specific filters)
+  if (currentType) {
+    lastFilter = { kind: "danh-sach", args: { type: currentType, page } };
+    updatePageTitle(currentType);
+    const url = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
+    return fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        const items = data?.data?.items || data?.items || [];
+        const totalPages = extractTotalPages(data);
+        renderMovies(items);
+        renderPagination(page, totalPages);
+        return data;
+      })
+      .catch(err => {
+        console.error(err);
+        renderMovies([]);
+        renderPagination(1, 1);
+        return null;
+      });
+  }
+  
+  return loadLatest(page);
 }
 
 /* ===== Pagination Handler ===== */
@@ -382,6 +537,7 @@ function goToPage(page) {
 
   if (k === "latest") return loadLatest(page);
   if (k === "danh-sach") return loadByType(a.type || currentType, page);
+  if (k === "danh-sach-filter") return fetchDanhSachWithFilter(a.type || currentType, a, page);
   if (k === "search") return searchMovie(page);
   if (k === "the-loai") return fetchTheLoai(a, page);
   if (k === "quoc-gia") return fetchQuocGia(a, page);
@@ -593,17 +749,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Home/List page
   if (document.getElementById("movies")) {
-    const params = new URLSearchParams(location.search);
+    // Check if we're coming back from movie.html
+    const lastIndexURL = sessionStorage.getItem("lastIndexURL");
+    let searchStr = location.search;
+    
+    if (lastIndexURL && !location.search) {
+      // Restore the previous URL and use it for parsing
+      searchStr = lastIndexURL;
+      history.replaceState(null, "", `index.html${lastIndexURL}`);
+      sessionStorage.removeItem("lastIndexURL");
+    } else {
+      // Clear the stored URL if we have a search string
+      sessionStorage.removeItem("lastIndexURL");
+    }
+    
+    const params = new URLSearchParams(searchStr);
     const page = parseInt(params.get("page")) || 1;
     const type = params.get("type");
     const keyword = params.get("keyword");
     const category = params.get("category");
     const country = params.get("country");
     const year = params.get("year");
+    const lang = params.get("lang");
+    const navType = params.get("navType"); // Get navType from URL
+    
+    // Restore filter values from URL
+    if (category) {
+      const categoryEl = document.getElementById("category");
+      if (categoryEl) categoryEl.value = category;
+    }
+    if (country) {
+      const countryEl = document.getElementById("country");
+      if (countryEl) countryEl.value = country;
+    }
+    if (year) {
+      const yearEl = document.getElementById("year");
+      if (yearEl) yearEl.value = year;
+    }
+    if (lang) {
+      const sortLangEl = document.getElementById("sortLang");
+      if (sortLangEl) sortLangEl.value = lang;
+    }
+    
+    // Set currentType from navType first, then type
+    if (navType) {
+      currentType = navType;
+    } else if (type && type !== "search" && type !== "the-loai" && type !== "quoc-gia" && type !== "nam") {
+      currentType = type;
+    } else {
+      currentType = null; // No default type
+    }
 
     let loader;
-
-    if (type === "the-loai" && category) {
+    
+    // Check if it's a nav type (like hoat-hinh) with filter params
+    const isNavType = type && !["search", "the-loai", "quoc-gia", "nam"].includes(type);
+    
+    if (isNavType && (country || year)) {
+      // Using danh-sach endpoint with filter
+      currentType = type;
+      const args = { country: country || "", year: year || "", limit: 24 };
+      loader = fetchDanhSachWithFilter(type, args, page);
+    } else if (type === "the-loai" && category) {
       loader = fetchTheLoai({ category, country: "", year: "", limit: 24 }, page);
     } else if (type === "quoc-gia" && country) {
       loader = fetchQuocGia({ country, category: "", year: "", limit: 24 }, page);
@@ -613,6 +820,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (keyword) document.getElementById("searchInput").value = keyword;
       loader = searchMovie(page);
     } else if (type && type !== "search") {
+      currentType = type;
       loader = loadByType(type, page);
     } else {
       loader = loadLatest(page);
@@ -634,6 +842,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") { e.preventDefault(); searchMovie(); }
       });
     }
+    
+    // Auto-apply filters when selection changes
+    const categoryEl = document.getElementById("category");
+    const countryEl = document.getElementById("country");
+    const yearEl = document.getElementById("year");
+    const sortLangEl = document.getElementById("sortLang");
+    
+    if (categoryEl) categoryEl.addEventListener("change", () => applyFilter(1));
+    if (countryEl) countryEl.addEventListener("change", () => applyFilter(1));
+    if (yearEl) yearEl.addEventListener("change", () => applyFilter(1));
+    if (sortLangEl) sortLangEl.addEventListener("change", () => applyFilter(1));
   }
 
   // Movie Detail page
@@ -654,6 +873,98 @@ document.addEventListener("DOMContentLoaded", () => {
         const detail = document.getElementById("detail");
         if (detail) detail.innerHTML = "<p>Không thể tải dữ liệu phim.</p>";
       });
+  }
+});
+
+/* ===== Handle browser back/forward buttons ===== */
+window.addEventListener("popstate", (event) => {
+  // Only handle if we're on the movies list page
+  if (!document.getElementById("movies")) return;
+  
+  // Set flag to prevent pushState during popstate handling
+  isPopState = true;
+  
+  const params = new URLSearchParams(location.search);
+  const page = parseInt(params.get("page")) || 1;
+  const type = params.get("type");
+  const keyword = params.get("keyword");
+  const category = params.get("category");
+  const country = params.get("country");
+  const year = params.get("year");
+  const navType = params.get("navType");
+  const lang = params.get("lang");
+  
+  // Clear filter dropdowns first
+  const categoryEl = document.getElementById("category");
+  const countryEl = document.getElementById("country");
+  const yearEl = document.getElementById("year");
+  const langEl = document.getElementById("sortLang");
+  if (categoryEl) categoryEl.value = "";
+  if (countryEl) countryEl.value = "";
+  if (yearEl) yearEl.value = "";
+  if (langEl) langEl.value = "";
+  
+  // Restore currentType from navType if exists
+  if (navType) {
+    currentType = navType;
+  } else if (type && type !== "search" && type !== "the-loai" && type !== "quoc-gia" && type !== "nam") {
+    currentType = type;
+  } else {
+    currentType = null;
+  }
+  
+  // Restore filter dropdown values
+  if (category) {
+    const categoryEl = document.getElementById("category");
+    if (categoryEl) categoryEl.value = category;
+  }
+  if (country) {
+    const countryEl = document.getElementById("country");
+    if (countryEl) countryEl.value = country;
+  }
+  if (year) {
+    const yearEl = document.getElementById("year");
+    if (yearEl) yearEl.value = year;
+  }
+  if (lang) {
+    const langEl = document.getElementById("sortLang");
+    if (langEl) langEl.value = lang;
+  }
+  
+  // Load the appropriate content
+  let loader;
+  
+  // Check if it's a type with filter params (e.g., hoat-hinh with country/year)
+  const isNavType = type && !["search", "the-loai", "quoc-gia", "nam"].includes(type);
+  
+  if (isNavType && (country || year)) {
+    // Using danh-sach endpoint with filter
+    currentType = type;
+    const args = { country: country || "", year: year || "", limit: 24 };
+    loader = fetchDanhSachWithFilter(type, args, page);
+  } else if (type === "the-loai" && category) {
+    loader = fetchTheLoai({ category, country: "", year: "", limit: 24 }, page);
+  } else if (type === "quoc-gia" && country) {
+    loader = fetchQuocGia({ country, category: "", year: "", limit: 24 }, page);
+  } else if (type === "nam" && year) {
+    loader = fetchNam({ year, category: "", country: "", limit: 24 }, page);
+  } else if (type === "search" || keyword) {
+    if (keyword) {
+      const searchInput = document.getElementById("searchInput");
+      if (searchInput) searchInput.value = keyword;
+    }
+    loader = searchMovie(page);
+  } else if (type && type !== "search") {
+    loader = loadByType(type, page);
+  } else {
+    loader = loadLatest(page);
+  }
+  
+  // Reset isPopState flag after loading completes
+  if (loader && loader.then) {
+    loader.then(() => { isPopState = false; }).catch(() => { isPopState = false; });
+  } else {
+    isPopState = false;
   }
 });
 
