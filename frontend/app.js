@@ -103,6 +103,7 @@ const titleMap = {
   "phim-bo": "📺 Phim bộ",
   "tv-shows": "📡 TV Shows",
   "hoat-hinh": "🎨 Hoạt hình",
+  "phim-chieu-rap": "🎥 Phim chiếu rạp",
   "phim-vietsub": "🇻🇳 Phim Vietsub",
   "phim-thuyet-minh": "🎙️ Phim Thuyết minh",
   "phim-long-tieng": "🔊 Phim Lồng tiếng"
@@ -315,6 +316,46 @@ function loadByType(type, page = 1) {
 
 function loadList(type) {
   return loadByType(type, 1);
+}
+
+/* ===== Load Phim Chiếu Rạp ===== */
+function loadPhimChieuRap(page = 1) {
+  currentType = "phim-chieu-rap";
+  currentPage = page;
+  
+  // Clear filters when loading phim chieu rap
+  const categoryEl = document.getElementById("category");
+  const countryEl = document.getElementById("country");
+  const yearEl = document.getElementById("year");
+  const sortLangEl = document.getElementById("sortLang");
+  if (categoryEl) categoryEl.value = "";
+  if (countryEl) countryEl.value = "";
+  if (yearEl) yearEl.value = "";
+  if (sortLangEl) sortLangEl.value = "";
+  
+  lastFilter = { kind: "phim-chieu-rap", args: { page } };
+  updatePageTitle("phim-chieu-rap");
+  if (!isPopState) history.pushState(null, "", `?type=phim-chieu-rap&page=${page}`);
+
+  const limit = 24;
+  // API endpoint riêng cho phim chiếu rạp
+  const url = `${PHIMAPI}/v1/api/danh-sach/phim-chieu-rap?page=${page}&limit=${limit}`;
+
+  return fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      const items = data?.data?.items || data?.items || [];
+      const totalPages = extractTotalPages(data);
+      renderMovies(items);
+      renderPagination(page, totalPages);
+      return data;
+    })
+    .catch(err => {
+      console.error(err);
+      renderMovies([]);
+      renderPagination(1, 1);
+      return null;
+    });
 }
 
 /* ===== Search ===== */
@@ -538,6 +579,7 @@ function goToPage(page) {
   if (k === "latest") return loadLatest(page);
   if (k === "danh-sach") return loadByType(a.type || currentType, page);
   if (k === "danh-sach-filter") return fetchDanhSachWithFilter(a.type || currentType, a, page);
+  if (k === "phim-chieu-rap") return loadPhimChieuRap(page);
   if (k === "search") return searchMovie(page);
   if (k === "the-loai") return fetchTheLoai(a, page);
   if (k === "quoc-gia") return fetchQuocGia(a, page);
@@ -794,7 +836,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set currentType from navType first, then type
     if (navType) {
       currentType = navType;
-    } else if (type && type !== "search" && type !== "the-loai" && type !== "quoc-gia" && type !== "nam") {
+    } else if (type && type !== "search" && type !== "the-loai" && type !== "quoc-gia" && type !== "nam" && type !== "phim-chieu-rap") {
       currentType = type;
     } else {
       currentType = null; // No default type
@@ -803,9 +845,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let loader;
     
     // Check if it's a nav type (like hoat-hinh) with filter params
-    const isNavType = type && !["search", "the-loai", "quoc-gia", "nam"].includes(type);
+    const isNavType = type && !["search", "the-loai", "quoc-gia", "nam", "phim-chieu-rap"].includes(type);
     
-    if (isNavType && (country || year)) {
+    if (type === "phim-chieu-rap") {
+      loader = loadPhimChieuRap(page);
+    } else if (isNavType && (country || year)) {
       // Using danh-sach endpoint with filter
       currentType = type;
       const args = { country: country || "", year: year || "", limit: 24 };
@@ -935,9 +979,11 @@ window.addEventListener("popstate", (event) => {
   let loader;
   
   // Check if it's a type with filter params (e.g., hoat-hinh with country/year)
-  const isNavType = type && !["search", "the-loai", "quoc-gia", "nam"].includes(type);
+  const isNavType = type && !["search", "the-loai", "quoc-gia", "nam", "phim-chieu-rap"].includes(type);
   
-  if (isNavType && (country || year)) {
+  if (type === "phim-chieu-rap") {
+    loader = loadPhimChieuRap(page);
+  } else if (isNavType && (country || year)) {
     // Using danh-sach endpoint with filter
     currentType = type;
     const args = { country: country || "", year: year || "", limit: 24 };
@@ -971,6 +1017,7 @@ window.addEventListener("popstate", (event) => {
 /* ===== Expose to global ===== */
 window.loadList = loadList;
 window.loadByType = loadByType;
+window.loadPhimChieuRap = loadPhimChieuRap;
 window.applyFilter = applyFilter;
 window.searchMovie = searchMovie;
 window.goHome = goHome;
