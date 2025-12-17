@@ -127,15 +127,24 @@ function renderMovies(list) {
   if (!moviesEl) return;
   moviesEl.innerHTML = "";
 
-  (list || []).forEach(m => {
+  (list || []).forEach((m, index) => {
     const card = document.createElement("div");
     card.className = "movie";
     card.addEventListener("click", () => { if (m && m.slug) goMovie(m.slug); });
 
     const img = document.createElement("img");
     const imgSrc = buildImageUrl(m.poster_url || m.thumb_url || "");
+    
+    // Load tất cả ảnh ngay lập tức
     img.src = imgSrc || "https://via.placeholder.com/300x450?text=No+Image";
+    img.loading = "eager";
+    // Ưu tiên cao cho 8 ảnh đầu
+    if (index < 8) img.fetchPriority = "high";
+    
     img.alt = m.name || "";
+    img.width = 300;
+    img.height = 450;
+    img.decoding = "async";
     img.onerror = function() { imgFallback(this); };
 
     const h3 = document.createElement("h3");

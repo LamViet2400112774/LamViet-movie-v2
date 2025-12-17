@@ -218,6 +218,8 @@ img {
   cursor: pointer;
   transition: var(--transition);
   position: relative;
+  /* Performance: contain layout recalculations */
+  contain: layout style;
 }
 
 .movie:hover {
@@ -253,6 +255,10 @@ img {
   height: 240px;
   object-fit: cover;
   transition: var(--transition);
+  /* Performance optimizations */
+  content-visibility: auto;
+  contain-intrinsic-size: 100% 240px;
+  will-change: filter;
 }
 
 .movie:hover img {
