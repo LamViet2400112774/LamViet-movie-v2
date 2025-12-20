@@ -169,22 +169,78 @@ function renderPagination(page, totalPages) {
   const current = Number(page) || 1;
   const total = Number(totalPages) || 1;
 
+  // Nút Previous (<)
   const prev = document.createElement("button");
-  prev.textContent = "⬅ Trang trước";
+  prev.textContent = "<";
   prev.disabled = current <= 1;
   prev.addEventListener("click", () => goToPage(current - 1));
+  p.appendChild(prev);
 
-  const info = document.createElement("span");
-  info.textContent = ` Trang ${current} / ${total} `;
-  info.style.margin = "0 12px";
+  // Logic hiển thị số trang
+  const createPageBtn = (pageNum) => {
+    const btn = document.createElement("button");
+    btn.textContent = pageNum;
+    if (pageNum === current) {
+      btn.classList.add("active");
+    }
+    btn.addEventListener("click", () => goToPage(pageNum));
+    return btn;
+  };
 
+  const createEllipsis = () => {
+    const span = document.createElement("button");
+    span.textContent = "...";
+    span.disabled = true;
+    span.classList.add("ellipsis");
+    return span;
+  };
+
+  if (total <= 7) {
+    // Hiển thị tất cả nếu ít trang
+    for (let i = 1; i <= total; i++) {
+      p.appendChild(createPageBtn(i));
+    }
+  } else {
+    // Luôn hiển thị trang 1
+    p.appendChild(createPageBtn(1));
+
+    if (current > 4) {
+      p.appendChild(createEllipsis());
+    }
+
+    // Các trang xung quanh trang hiện tại (hiển thị 2 trang trước và 2 trang sau)
+    let start = Math.max(2, current - 2);
+    let end = Math.min(total - 1, current + 2);
+
+    // Nếu đang ở đầu (trang 1-4)
+    if (current <= 4) {
+      start = 2;
+      end = Math.min(6, total - 1);
+    }
+
+    // Nếu đang ở cuối
+    if (current >= total - 3) {
+      start = Math.max(2, total - 5);
+      end = total - 1;
+    }
+
+    for (let i = start; i <= end; i++) {
+      p.appendChild(createPageBtn(i));
+    }
+
+    if (current < total - 3) {
+      p.appendChild(createEllipsis());
+    }
+
+    // Luôn hiển thị trang cuối
+    p.appendChild(createPageBtn(total));
+  }
+
+  // Nút Next (>)
   const next = document.createElement("button");
-  next.textContent = "Trang sau ➡";
+  next.textContent = ">";
   next.disabled = current >= total;
   next.addEventListener("click", () => goToPage(current + 1));
-
-  p.appendChild(prev);
-  p.appendChild(info);
   p.appendChild(next);
 }
 
