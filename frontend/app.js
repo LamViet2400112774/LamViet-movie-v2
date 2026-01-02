@@ -96,6 +96,8 @@ let currentPage = 1;
 let currentType = null; // Don't default to phim-le, let URL determine
 let lastFilter = { kind: "latest", args: {} };
 let isPopState = false; // Flag to prevent pushState during popstate
+let episodeButtons = [];
+let activeEpisodeIndex = -1;
 
 /* ===== Title Map ===== */
 const titleMap = {
@@ -714,6 +716,43 @@ function loadFilterOptions() {
   }
 }
 
+/* ===== Episode Navigation ===== */
+function updateEpisodeNav() {
+  const prevBtn = document.getElementById("prevEpisode");
+  const nextBtn = document.getElementById("nextEpisode");
+  const status = document.getElementById("episodeStatus");
+  const total = episodeButtons.length;
+
+  if (prevBtn) prevBtn.disabled = activeEpisodeIndex <= 0;
+  if (nextBtn) nextBtn.disabled = activeEpisodeIndex >= total - 1;
+  if (status) status.textContent = total > 0 ? `Tập ${activeEpisodeIndex + 1}/${total}` : "0/0";
+}
+
+function selectEpisode(index) {
+  if (index < 0 || index >= episodeButtons.length) return;
+  
+  episodeButtons.forEach(b => b.classList.remove("active"));
+  episodeButtons[index].classList.add("active");
+  activeEpisodeIndex = index;
+  
+  const label = episodeButtons[index].textContent || `Tập ${index + 1}`;
+  const info = document.getElementById("episodeInfo");
+  if (info) info.innerHTML = `<strong style="color: var(--primary);">${label}</strong>`;
+  
+  playEpisode(episodeButtons[index].dataset.link);
+  updateEpisodeNav();
+}
+
+function initEpisodeNav() {
+  const prevBtn = document.getElementById("prevEpisode");
+  const nextBtn = document.getElementById("nextEpisode");
+  
+  if (prevBtn) prevBtn.onclick = () => selectEpisode(activeEpisodeIndex - 1);
+  if (nextBtn) nextBtn.onclick = () => selectEpisode(activeEpisodeIndex + 1);
+  
+  updateEpisodeNav();
+}
+
 /* ===== Movie Detail ===== */
 function renderMovieDetail(movie, episodes) {
   const detailEl = document.getElementById("detail");
@@ -785,47 +824,26 @@ function renderMovieDetail(movie, episodes) {
   if (!episodesEl) return;
 
   let html = "";
-  let firstLink = null;
   (episodes || []).forEach(server => {
     html += `<h4>${server.server_name || "Server"}</h4><div class="episode-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">`;
     (server.server_data || []).forEach(ep => {
       const link = ep.link_embed || ep.link || "";
-      if (!firstLink && link) firstLink = link;
       html += `<button class="episode-btn" data-link="${link}" style="padding:6px 8px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer">${safeText(ep.name || "Tập")}</button>`;
     });
     html += `</div>`;
   });
   episodesEl.innerHTML = html;
 
-  document.querySelectorAll(".episode-btn").forEach((btn, index) => {
-    btn.addEventListener("click", () => {
-      // Remove active class from all buttons
-      document.querySelectorAll(".episode-btn").forEach(b => b.classList.remove("active"));
-      // Add active class to clicked button
-      btn.classList.add("active");
-      // Update current episode info
-      const episodeInfo = document.getElementById("episodeInfo");
-      if (episodeInfo) {
-        episodeInfo.innerHTML = `<strong style="color: var(--primary);">${btn.textContent}</strong>`;
-      }
-      playEpisode(btn.dataset.link);
-    });
+  episodeButtons = Array.from(document.querySelectorAll(".episode-btn"));
+  episodeButtons.forEach((btn, index) => {
+    btn.addEventListener("click", () => selectEpisode(index));
   });
 
-  if (firstLink) {
-    // Set first button as active
-    const firstBtn = document.querySelector(".episode-btn");
-    if (firstBtn) {
-      firstBtn.classList.add("active");
-      // Update episode info for first episode
-      const episodeInfo = document.getElementById("episodeInfo");
-      if (episodeInfo) {
-        episodeInfo.innerHTML = `<strong style="color: var(--primary);">${firstBtn.textContent}</strong>`;
-      }
-    }
-    playEpisode(firstLink);
-  }
-  else {
+  initEpisodeNav();
+
+  if (episodeButtons.length > 0) {
+    selectEpisode(0);
+  } else {
     const player = document.getElementById("player");
     if (player) player.innerHTML = "<p>Phim chưa có tập</p>";
   }

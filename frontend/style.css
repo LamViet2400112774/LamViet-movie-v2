@@ -400,6 +400,39 @@ img {
   line-height: 1.8;
 }
 
+/* ===== Episode Navigation ===== */
+.episode-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 20px;
+}
+
+.episode-nav button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.episode-nav button:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.episode-nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#episodeStatus {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
 .meta b {
   color: var(--text-primary);
 }
