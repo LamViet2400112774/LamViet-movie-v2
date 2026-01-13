@@ -288,7 +288,7 @@ function fetchDanhSachWithFilter(type, args, page = 1) {
   if (year) params.year = year;
   if (sortLang) params.sort_lang = sortLang;
   
-  const endpoint = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(type)}?${q(params)}`;
+  const endpoint = `${API}/danh-sach/${encodeURIComponent(type)}?${q(params)}`;
   
   // Save filter state
   lastFilter = { kind: "danh-sach-filter", args: { type, country, year, sortField, sortType, sortLang, limit, page } };
@@ -362,7 +362,7 @@ function loadByType(type, page = 1) {
   if (!isPopState) history.pushState(null, "", `?type=${encodeURIComponent(currentType)}&page=${page}`);
 
   const limit = 24;
-  const url = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
+  const url = `${API}/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
 
   return fetch(url)
     .then(r => r.json())
@@ -406,7 +406,7 @@ function loadPhimChieuRap(page = 1) {
 
   const limit = 24;
   // API endpoint riêng cho phim chiếu rạp
-  const url = `${PHIMAPI}/v1/api/danh-sach/phim-chieu-rap?page=${page}&limit=${limit}`;
+  const url = `${API}/danh-sach/phim-chieu-rap?page=${page}&limit=${limit}`;
 
   return fetch(url)
     .then(r => r.json())
@@ -436,7 +436,7 @@ function searchMovie(page = 1) {
   if (!isPopState) history.pushState(null, "", `?type=search&page=${page}&keyword=${encodeURIComponent(keyword)}`);
 
   const limit = 24;
-  const url = `${PHIMAPI}/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}&page=${page}&limit=${limit}`;
+  const url = `${API}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&limit=${limit}`;
 
   return fetch(url)
     .then(r => r.json())
@@ -469,7 +469,7 @@ function fetchTheLoai(args, page = 1) {
     year: args.year || "",
     limit: args.limit || 24
   };
-  const endpoint = `${PHIMAPI}/v1/api/the-loai/${encodeURIComponent(category)}?${q(params)}`;
+  const endpoint = `${API}/the-loai/${encodeURIComponent(category)}?${q(params)}`;
 
   lastFilter = { kind: "the-loai", args: Object.assign({}, args, { page }) };
   
@@ -508,7 +508,7 @@ function fetchQuocGia(args, page = 1) {
     year: args.year || "",
     limit: args.limit || 24
   };
-  const endpoint = `${PHIMAPI}/v1/api/quoc-gia/${encodeURIComponent(country)}?${q(params)}`;
+  const endpoint = `${API}/quoc-gia/${encodeURIComponent(country)}?${q(params)}`;
 
   lastFilter = { kind: "quoc-gia", args: Object.assign({}, args, { page }) };
   
@@ -547,7 +547,7 @@ function fetchNam(args, page = 1) {
     country: args.country || "",
     limit: args.limit || 24
   };
-  const endpoint = `${PHIMAPI}/v1/api/nam/${encodeURIComponent(year)}?${q(params)}`;
+  const endpoint = `${API}/danh-sach/nam/${encodeURIComponent(year)}?${q(params)}`;
 
   lastFilter = { kind: "nam", args: Object.assign({}, args, { page }) };
   
@@ -614,7 +614,7 @@ function applyFilter(page = 1) {
   if (currentType) {
     lastFilter = { kind: "danh-sach", args: { type: currentType, page } };
     updatePageTitle(currentType);
-    const url = `${PHIMAPI}/v1/api/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
+    const url = `${API}/danh-sach/${encodeURIComponent(currentType)}?page=${page}&limit=${limit}`;
     return fetch(url)
       .then(r => r.json())
       .then(data => {
@@ -670,7 +670,7 @@ function loadFilterOptions() {
   const yearEl = document.getElementById("year");
 
   if (catEl) {
-    fetch(`${PHIMAPI}/the-loai`)
+    fetch(`${API}/the-loai`)
       .then(r => r.json())
       .then(json => {
         const arr = safeListFromResponse(json);
@@ -688,7 +688,7 @@ function loadFilterOptions() {
   }
 
   if (countryEl) {
-    fetch(`${PHIMAPI}/quoc-gia`)
+    fetch(`${API}/quoc-gia`)
       .then(r => r.json())
       .then(json => {
         const arr = safeListFromResponse(json);
