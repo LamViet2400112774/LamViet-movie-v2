@@ -739,6 +739,15 @@ function selectEpisode(index) {
   
   playEpisode(episodeButtons[index].dataset.link);
   updateEpisodeNav();
+  
+  // Lưu lịch sử xem nếu đã đăng nhập
+  if (typeof saveWatchHistory === 'function' && typeof getCurrentUser === 'function' && getCurrentUser()) {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get("slug");
+    const movieName = document.querySelector(".meta h1")?.textContent || "";
+    const moviePoster = document.getElementById("detail-poster")?.src || "";
+    saveWatchHistory(slug, movieName, moviePoster, label, index, 0);
+  }
 }
 
 function initEpisodeNav() {
@@ -840,7 +849,13 @@ function renderMovieDetail(movie, episodes) {
   initEpisodeNav();
 
   if (episodeButtons.length > 0) {
-    selectEpisode(0);
+    // Đọc tham số ep từ URL để tiếp tục xem từ tập đã dừng
+    const urlParams = new URLSearchParams(location.search);
+    const savedEpisodeIndex = parseInt(urlParams.get("ep")) || 0;
+    
+    // Chọn tập từ URL (nếu có) hoặc tập đầu tiên
+    const episodeToPlay = Math.min(savedEpisodeIndex, episodeButtons.length - 1);
+    selectEpisode(episodeToPlay);
   } else {
     const player = document.getElementById("player");
     if (player) player.innerHTML = "<p>Phim chưa có tập</p>";

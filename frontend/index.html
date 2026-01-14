@@ -45,6 +45,23 @@
         <input id="searchInput" placeholder="Tìm kiếm phim..." />
         <button onclick="searchMovie()">🔍</button>
       </div>
+
+      <!-- Auth Section -->
+      <div class="auth-section">
+        <button id="authBtn" class="btn-auth" onclick="showAuthModal('login')">
+          <span>👤</span> Đăng nhập
+        </button>
+        
+        <div id="userMenu" class="user-menu" style="display:none">
+          <span id="userName" class="user-name"></span>
+          <button class="btn-history" onclick="showHistoryModal()" title="Lịch sử xem">
+            📺 Lịch sử
+          </button>
+          <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+            🚪 Thoát
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -84,7 +101,87 @@
     <p>© 2025 MovieSite - Xem phim online miễn phí</p>
   </footer>
 
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal">
+    <div class="modal-content auth-modal">
+      <button class="modal-close" onclick="closeAuthModal()">×</button>
+      
+      <div class="auth-tabs">
+        <button id="loginTab" class="auth-tab active" onclick="switchAuthMode('login')">Đăng nhập</button>
+        <button id="registerTab" class="auth-tab" onclick="switchAuthMode('register')">Đăng ký</button>
+      </div>
+      
+      <div id="authError" class="auth-error"></div>
+      
+      <!-- Login Form -->
+      <form id="loginFormElement">
+        <div id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail">📧 Email</label>
+            <input type="email" id="loginEmail" required placeholder="Nhập email của bạn">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">🔒 Mật khẩu</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="loginPassword" required placeholder="Nhập mật khẩu">
+              <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                👁️
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Đăng nhập</button>
+        </div>
+      </form>
+      
+      <!-- Register Form -->
+      <form id="registerFormElement">
+        <div id="registerForm" style="display:none">
+          <div class="form-group">
+            <label for="registerName">👤 Tên hiển thị</label>
+            <input type="text" id="registerName" required placeholder="Nhập tên của bạn" minlength="2">
+          </div>
+          <div class="form-group">
+            <label for="registerEmail">📧 Email</label>
+            <input type="email" id="registerEmail" required placeholder="Nhập email của bạn">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">🔒 Mật khẩu</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="registerPassword" required minlength="6" placeholder="Ít nhất 6 ký tự">
+              <button type="button" class="toggle-password" onclick="togglePassword('registerPassword', this)">
+                👁️
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="registerConfirmPassword">🔒 Xác nhận mật khẩu</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="registerConfirmPassword" required placeholder="Nhập lại mật khẩu">
+              <button type="button" class="toggle-password" onclick="togglePassword('registerConfirmPassword', this)">
+                👁️
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Đăng ký</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content history-modal">
+      <button class="modal-close" onclick="closeHistoryModal()">×</button>
+      <div class="history-header">
+        <h2>📺 Lịch sử xem phim</h2>
+        <button class="btn-clear-history" onclick="handleClearAllHistory()">🗑️ Xóa tất cả</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>
+
   <script src="app.js" defer></script>
+  <script src="auth.js" defer></script>
   <script>
     function toggleMenu() {
       document.getElementById('navMenu').classList.toggle('active');
